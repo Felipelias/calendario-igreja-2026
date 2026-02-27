@@ -9,17 +9,7 @@ MARÇO
 12/03 - Reunião Ministério de Louvor
 06/03 - Vigília pré Santa Ceia
 19/03 - Reunião do diaconato
-27/03 - Reservado para Pra Dora
-29/03 - Louvor com as Crianças no altar
-
-ABRIL
-
-02/04 - Reunião geral de liderança
-09/04 - Reunião Ministério de Louvor
-10/04 - Vigília pré Santa Ceia
-16/04 - Workshop Somos Um
-23/04 - Reservado para Pra Dora
-25/04 - Encontro Regional de homens - Chácara
+27/03
 26/04 - Louvor com as Crianças no altar
 `;
 
@@ -74,3 +64,4 @@ function gerarCalendario(texto) {
     }
   });
 }
+
