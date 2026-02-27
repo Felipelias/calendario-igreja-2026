@@ -1,27 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("./agenda.txt")
-    .then(res => res.text())
-    .then(texto => gerarCalendario(texto));
-});
 
-function limparTexto(texto) {
-  return texto
-    .replace(/>/g, "")
-    .replace(/\*/g, "")
-    .replace(/_/g, "")
-    .trim();
-}
+  const raw = document.getElementById("agenda-data");
+
+  if (!raw) {
+    console.error("Bloco agenda-data não encontrado");
+    return;
+  }
+
+  const texto = raw.textContent.trim();
+  gerarCalendario(texto);
+});
 
 function ehSabado(dia, mes, ano) {
   const data = new Date(ano, mes - 1, dia);
-  return data.getDay() === 6; // 6 = sábado
+  return data.getDay() === 6;
 }
 
 function gerarCalendario(texto) {
 
-  texto = limparTexto(texto);
-
-  const linhas = texto.split(/\r?\n/)
+  const linhas = texto.split("\n")
     .map(l => l.trim())
     .filter(l => l.length > 0);
 
@@ -34,22 +31,12 @@ function gerarCalendario(texto) {
 
   let blocoMes = null;
 
-  linhas.slice(1).forEach(linha => {
+  for (let i = 1; i < linhas.length; i++) {
 
-    // Linha de mês
-    if (!/^\d{2}\/\d{2}/.test(linha)) {
+    const linha = linhas[i];
 
-      blocoMes = document.createElement("div");
-      blocoMes.classList.add("month-block");
-
-      const tituloMes = document.createElement("h2");
-      tituloMes.classList.add("month-title");
-      tituloMes.innerText = linha.toUpperCase();
-
-      blocoMes.appendChild(tituloMes);
-      container.appendChild(blocoMes);
-
-    } else {
+    // Se começa com número → evento
+    if (/^\d{2}\/\d{2}/.test(linha)) {
 
       const partes = linha.split(" - ");
       const dataTexto = partes[0];
@@ -63,7 +50,7 @@ function gerarCalendario(texto) {
         eventoDiv.classList.add("event");
 
         eventoDiv.innerHTML = `
-          <div class="date">${dia.toString().padStart(2, "0")}</div>
+          <div class="date">${dia}</div>
           <div class="info">${titulo}</div>
         `;
 
@@ -71,6 +58,17 @@ function gerarCalendario(texto) {
           blocoMes.appendChild(eventoDiv);
         }
       }
+
+    } else {
+      // É mês
+      blocoMes = document.createElement("div");
+      blocoMes.classList.add("month-block");
+
+      const tituloMes = document.createElement("h2");
+      tituloMes.innerText = linha;
+
+      blocoMes.appendChild(tituloMes);
+      container.appendChild(blocoMes);
     }
-  });
+  }
 }
