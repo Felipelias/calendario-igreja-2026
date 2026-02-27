@@ -1,18 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("agenda.txt")
-    .then(res => res.text())
-    .then(texto => gerarCalendario(texto));
+
+  const texto = `
+2026
+
+MARÇO
+
+05/03 - Reunião geral de liderança
+12/03 - Reunião Ministério de Louvor
+06/03 - Vigília pré Santa Ceia
+19/03 - Reunião do diaconato
+27/03 - Reservado para Pra Dora
+29/03 - Louvor com as Crianças no altar
+
+ABRIL
+
+02/04 - Reunião geral de liderança
+09/04 - Reunião Ministério de Louvor
+10/04 - Vigília pré Santa Ceia
+16/04 - Workshop Somos Um
+23/04 - Reservado para Pra Dora
+25/04 - Encontro Regional de homens - Chácara
+26/04 - Louvor com as Crianças no altar
+`;
+
+  gerarCalendario(texto);
 });
 
 function gerarCalendario(texto) {
 
-  const linhas = texto.split("\n")
+  const linhas = texto.split(/\r?\n/)
     .map(l => l.trim())
-    .filter(l => l !== "");
+    .filter(l => l.length > 0);
 
   const container = document.querySelector(".calendar");
+  container.innerHTML = "";
 
-  let ano = linhas[0];
+  const ano = linhas[0];
   document.querySelector(".subtitle").innerText =
     "CALENDÁRIO ANUAL " + ano;
 
@@ -20,7 +43,7 @@ function gerarCalendario(texto) {
 
   linhas.slice(1).forEach(linha => {
 
-    if (!linha.includes("/") && !linha.includes("-")) {
+    if (!/^\d{2}\//.test(linha)) {
 
       blocoMes = document.createElement("div");
       blocoMes.classList.add("month-block");
@@ -32,12 +55,9 @@ function gerarCalendario(texto) {
       blocoMes.appendChild(tituloMes);
       container.appendChild(blocoMes);
 
-      return;
-    }
+    } else {
 
-    const partes = linha.split(" - ");
-    if (partes.length >= 2) {
-
+      const partes = linha.split(" - ");
       const data = partes[0];
       const titulo = partes.slice(1).join(" - ");
       const dia = data.split("/")[0];
