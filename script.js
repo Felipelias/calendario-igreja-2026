@@ -1,10 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
-
-  const raw = document.getElementById("agenda-data");
-  const texto = raw.textContent.trim();
-
-  gerarCalendario(texto);
+  carregarAgenda();
 });
+
+async function carregarAgenda() {
+  try {
+    const response = await fetch("agenda.txt?v=" + new Date().getTime());
+    const texto = await response.text();
+    gerarCalendario(texto);
+  } catch (erro) {
+    console.error("Erro ao carregar agenda:", erro);
+  }
+}
 
 function ehSabado(dia, mes, ano) {
   const data = new Date(ano, mes - 1, dia);
@@ -48,12 +54,10 @@ function gerarCalendario(texto) {
     }
   }
 
-  // Renderiza só meses que têm sábado
   Object.keys(eventosPorMes).forEach(mes => {
 
     if (eventosPorMes[mes].length === 0) return;
 
-    // Ordena por dia
     eventosPorMes[mes].sort((a, b) => a.dia - b.dia);
 
     const blocoMes = document.createElement("div");
