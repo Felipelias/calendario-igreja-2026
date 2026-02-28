@@ -1,114 +1,156 @@
 document.addEventListener("DOMContentLoaded", () => {
-  carregarDados();
+  iniciar();
 });
 
 let pessoas = {};
 
-async function carregarDados() {
-  const agenda = await fetch("agenda.txt?v=" + new Date().getTime()).then(r => r.text());
-  pessoas = await fetch("data/pessoas.json").then(r => r.json());
-  gerarCalendario(agenda);
+async function iniciar() {
+  try {
+    const [agendaTxt, pessoasJson] = await Promise.all([
+      fetch("agenda.txt?v=" + Date.now()).then(r => r.text()),
+      fetch("data/pessoas.json?v=" + Date.now()).then(r => r.json())
+    ]);
+
+    pessoas = pessoasJson || {};
+    gerarCalendario(agendaTxt || "");
+  } catch (e) {
+    console.error(e);
+    const container = document.querySelector(".calendar");
+    if (container) container.innerHTML = "<p style='opacity:.8'>Não foi possível carregar a agenda.</p>";
+  }
 }
 
 function gerarCalendario(texto) {
-
-  const linhas = texto.split("\n").map(l => l.trim()).filter(l => l);
-
+  const linhas = texto.split("\n").map(l => l.trim()).filter(Boolean);
   const container = document.querySelector(".calendar");
   container.innerHTML = "";
 
-  let ano = "";
+  let anoAtual = "";
   let mesAtual = "";
-  let eventosPorMes = {};
+  const dados = {};
 
-  linhas.forEach(linha => {
+  for (const original of linhas) {
+    let linha = original;
 
     if (/^\d{4}$/.test(linha)) {
-      ano = linha;
-      return;
+      anoAtual = linha;
+      if (!dados[anoAtual]) dados[anoAtual] = {};
+      continue;
     }
 
-    if (!linha.includes("/")) {
+    if (!anoAtual) continue;
+
+    const temData = /(\d{2})\/(\d{2})(?:\s*a\s*(\d{2})\/(\d{2}))?/.test(linha);
+
+    if (!temData) {
       mesAtual = linha;
-      if (!eventosPorMes[mesAtual]) eventosPorMes[mesAtual] = [];
-      return;
+      if (!dados[anoAtual][mesAtual]) dados[anoAtual][mesAtual] = [];
+      continue;
     }
+
+    if (!mesAtual) continue;
 
     let tipo = "principal";
+    const lower = linha.toLowerCase();
 
-    if (linha.startsWith("Evento:")) {
+    if (lower.startsWith("evento:")) {
       tipo = "evento";
-      linha = linha.replace("Evento:", "").trim();
-    }
-
-    if (linha.startsWith("Exceção:")) {
+      linha = linha.slice(7).trim();
+    } else if (lower.startsWith("exceção:") || lower.startsWith("excecao:")) {
       tipo = "excecao";
-      linha = linha.replace("Exceção:", "").trim();
+      linha = linha.split(":").slice(1).join(":").trim();
     }
 
-    const partes = linha.split("–");
-    const dataTexto = partes[0].trim();
-    const titulo = partes.slice(1).join("–").trim();
+    const m = linha.match(/(\d{2})\/(\d{2})(?:\s*a\s*(\d{2})\/(\d{2}))?/);
+    if (!m) continue;
 
-    const dia = dataTexto.split("/")[0];
+    const d1 = m[1];
+    const d2 = m[3];
+    let dataExibir = d1;
+    if (d2) dataExibir = `${d1}-${d2}`;
 
-    eventosPorMes[mesAtual].push({ dia, titulo, tipo });
-  });
+    let resto = linha.replace(m[0], "").trim();
+    resto = resto.replace(/^[–\-]\s*/, "");
+    resto = resto.replace(/\s{2,}/g, " ").trim();
 
-  Object.keys(eventosPorMes).forEach(mes => {
+    const nomeMatch = resto.match(/@([A-Za-zÀ-ÿ0-9_]+)/);
+    const nome = nomeMatch ? nomeMatch[1] : null;
 
-    const blocoMes = document.createElement("div");
-    blocoMes.classList.add("month-block");
+    let textoLimpo = resto.replace(/@([A-Za-zÀ-ÿ0-9_]+)/, "").trim();
+    textoLimpo = textoLimpo.replace(/\s{2,}/g, " ").trim();
 
-    const tituloMes = document.createElement("h2");
-    tituloMes.innerText = mes;
-    blocoMes.appendChild(tituloMes);
+    dados[anoAtual][mesAtual].push({ dataExibir, texto: textoLimpo, tipo, nome });
+  }
 
-    eventosPorMes[mes].forEach(evento => {
+  const anos = Object.keys(dados);
+  if (anos.length === 0) return;
 
-      const div = document.createElement("div");
-      div.classList.add("event");
-      if (evento.tipo !== "principal") div.classList.add(evento.tipo);
+  anos.forEach(ano => {
+    const meses = dados[ano];
+    Object.keys(meses).forEach(mes => {
+      if (!meses[mes] || meses[mes].length === 0) return;
 
-      const nomeMatch = evento.titulo.match(/@(\w+)/);
-let nome = nomeMatch ? nomeMatch[1] : null;
+      const blocoMes = document.createElement("div");
+      blocoMes.className = "month-block";
 
-let tituloLimpo = evento.titulo.replace(/@\w+/, "").trim();
-      
-      let nome = nomeMatch ? nomeMatch[1] : null;
+      const h2 = document.createElement("h2");
+      h2.textContent = mes;
+      blocoMes.appendChild(h2);
 
-      let fotoHTML = "";
+      meses[mes].forEach(ev => {
+        const div = document.createElement("div");
+        div.className = "event";
+        if (ev.tipo !== "principal") div.classList.add(ev.tipo);
 
-      if (nome && pessoas[nome]) {
-  div.onclick = () => abrirModal(nome);
-}
+        let avatarHTML = "";
+        if (ev.nome && pessoas[ev.nome] && pessoas[ev.nome].foto) {
+          avatarHTML = `<img class="avatar" src="${pessoas[ev.nome].foto}" alt="${ev.nome}">`;
+        } else if (ev.nome) {
+          const ini = ev.nome.trim().charAt(0).toUpperCase();
+          avatarHTML = `<div class="avatar fallback" aria-hidden="true">${ini}</div>`;
+        } else {
+          avatarHTML = `<div class="avatar ghost" aria-hidden="true"></div>`;
+        }
 
-      div.innerHTML = `
-        <div class="date">${evento.dia}</div>
-        ${fotoHTML}
-        <div class="info">${tituloLimpo}</div>
-      `;
+        div.innerHTML = `
+          <div class="date">${ev.dataExibir}</div>
+          ${avatarHTML}
+          <div class="info">${ev.texto}</div>
+        `;
 
-      blocoMes.appendChild(div);
+        if (ev.nome && pessoas[ev.nome]) {
+          div.addEventListener("click", () => abrirModal(ev.nome));
+        }
+
+        blocoMes.appendChild(div);
+      });
+
+      container.appendChild(blocoMes);
     });
-
-    container.appendChild(blocoMes);
   });
 }
 
 function abrirModal(nome) {
-
   const pessoa = pessoas[nome];
+  if (!pessoa) return;
 
-  document.getElementById("modal-foto").src = pessoa.foto;
-  document.getElementById("modal-nome").innerText = nome;
-  document.getElementById("modal-cargo").innerText = pessoa.cargo;
-  document.getElementById("modal-desc").innerText = pessoa.descricao;
+  const modal = document.getElementById("modal");
+  document.getElementById("modal-foto").src = pessoa.foto || "";
+  document.getElementById("modal-nome").textContent = nome;
+  document.getElementById("modal-cargo").textContent = pessoa.cargo || "";
+  document.getElementById("modal-desc").textContent = pessoa.descricao || "";
 
-  document.getElementById("modal").classList.add("active");
+  modal.classList.add("active");
+  modal.setAttribute("aria-hidden", "false");
 }
 
-document.getElementById("modal").addEventListener("click", () => {
-  document.getElementById("modal").classList.remove("active");
-});
+document.addEventListener("click", (e) => {
+  const modal = document.getElementById("modal");
+  if (!modal || !modal.classList.contains("active")) return;
 
+  const card = modal.querySelector(".modal-card");
+  if (card && !card.contains(e.target)) {
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+  }
+});
