@@ -1,13 +1,13 @@
 {
   "proximoEncontro": {
     "titulo": "Culto Fullness",
-    "dataISO": "2026-04-04",
-    "hora": "20:00",
+    "dataISO": "2026-03-07",
+    "hora": "09:00",
     "tipo": "presencial",
     "linkReuniao": "",
     "linkAta": "",
-    "endereco": "IEQ Sede Franca — Rua X, 123, Franca/SP",
+    "endereco": "A definir — Rua X, 123, Franca/SP",
     "maps": "https://maps.google.com/?q=IEQ+Sede+Franca",
-    "observacao": "Chegar 30 min antes."
+    "observacao": "Chegar 5 min antes."
   }
 }
