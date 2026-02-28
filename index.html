@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=50">
 </head>
 <body>
 
@@ -39,7 +39,34 @@
       </nav>
     </header>
 
-    <main class="calendar"></main>
+    <div class="filterbar" id="filterbar">
+      <button class="backbtn" id="backbtn" type="button">
+        <i class="ri-arrow-left-line"></i> Voltar
+      </button>
+      <div class="filtertitle" id="filtertitle"></div>
+    </div>
+
+    <main class="calendar" id="calendar"></main>
+
+    <section class="instagram-section">
+      <div class="ig-head">
+        <h2>Últimas postagens</h2>
+        <a class="ig-open" href="https://www.instagram.com/fullnessmovement?igsh=aHUyNTR0cjBsaWlx" target="_blank" rel="noreferrer">
+          Ver no Instagram
+        </a>
+      </div>
+
+      <div class="instagram-wrapper">
+        <iframe
+          src="https://snapwidget.com/embed/1119120"
+          class="snapwidget-widget"
+          allowtransparency="true"
+          frameborder="0"
+          scrolling="no"
+          title="Posts do Instagram">
+        </iframe>
+      </div>
+    </section>
 
   </div>
 
@@ -52,6 +79,6 @@
     </div>
   </div>
 
-  <script src="script.js?v=30"></script>
+  <script src="script.js?v=50"></script>
 </body>
 </html>
