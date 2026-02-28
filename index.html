@@ -8,49 +8,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 
-<div class="background-text"></div>
+  <div class="bg"></div>
+  <div class="bg-text">FULLNESS</div>
 
-<div class="container">
+  <div class="container">
 
-  <header class="header">
-    <img src="img/logo.jpeg" class="logo">
+    <header class="header">
+      <img src="img/logo.jpeg" class="logo" alt="Fullness">
 
-    <p class="subtitle">Movimento jovem da IEQ Sede Franca</p>
-    <p class="culto">Culto todo sábado às 20h</p>
+      <p class="subtitle">Movimento jovem da IEQ Sede Franca</p>
+      <p class="culto">Culto todo sábado às 20h</p>
 
-    <div class="social-links">
-      <a href="https://www.instagram.com/fullnessmovement" target="_blank">
-        <i class="ri-instagram-line"></i>
-      </a>
-      <a href="https://www.youtube.com/@fullnessmovement" target="_blank">
-        <i class="ri-youtube-line"></i>
-      </a>
-      <a href="https://www.tiktok.com/@fullness_movement" target="_blank">
-        <i class="ri-tiktok-line"></i>
-      </a>
-      <a href="https://chat.whatsapp.com/GeG2ysyuYXA6107AXPZjGH?mode=wwt" target="_blank">
-        <i class="ri-whatsapp-line"></i>
-      </a>
-    </div>
-  </header>
+      <nav class="social">
+        <a aria-label="Instagram" href="https://www.instagram.com/fullnessmovement?igsh=aHUyNTR0cjBsaWlx" target="_blank" rel="noreferrer">
+          <i class="ri-instagram-line"></i>
+        </a>
+        <a aria-label="YouTube" href="https://www.youtube.com/@fullnessmovement" target="_blank" rel="noreferrer">
+          <i class="ri-youtube-line"></i>
+        </a>
+        <a aria-label="TikTok" href="https://www.tiktok.com/@fullness_movement" target="_blank" rel="noreferrer">
+          <i class="ri-tiktok-line"></i>
+        </a>
+        <a aria-label="WhatsApp" href="https://chat.whatsapp.com/GeG2ysyuYXA6107AXPZjGH?mode=wwt" target="_blank" rel="noreferrer">
+          <i class="ri-whatsapp-line"></i>
+        </a>
+      </nav>
+    </header>
 
-  <section class="calendar"></section>
+    <main class="calendar"></main>
 
-</div>
-
-<div class="modal" id="modal">
-  <div class="modal-card">
-    <img id="modal-foto">
-    <h2 id="modal-nome"></h2>
-    <h3 id="modal-cargo"></h3>
-    <p id="modal-desc"></p>
   </div>
-</div>
 
-<script src="script.js?v=20"></script>
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <img id="modal-foto" alt="">
+      <h2 id="modal-nome"></h2>
+      <h3 id="modal-cargo"></h3>
+      <p id="modal-desc"></p>
+    </div>
+  </div>
+
+  <script src="script.js?v=30"></script>
 </body>
 </html>
