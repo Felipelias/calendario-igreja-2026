@@ -21,6 +21,7 @@ async function iniciar() {
 
     pessoas = pessoasJson || {};
     agendaEstruturada = parseAgenda(agendaTxt || "");
+    await carregarComunicados();
     render();
 
     document.getElementById("backbtn").addEventListener("click", () => {
@@ -483,3 +484,61 @@ document.addEventListener("click", (e) => {
     modal.setAttribute("aria-hidden", "true");
   }
 });
+
+async function carregarComunicados() {
+  try {
+    const dados = await fetch("data/comunicados.json?v=" + Date.now()).then(r => r.json());
+    renderProximoEncontro(dados?.proximoEncontro || null);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function formatarDataBR(dataISO) {
+  if (!dataISO) return "";
+  const [y, m, d] = dataISO.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const diaSemana = dias[dt.getDay()];
+  return `${diaSemana}, ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
+}
+
+function renderProximoEncontro(ev) {
+  const box = document.getElementById("nextBox");
+  if (!box) return;
+
+  if (!ev) {
+    box.innerHTML = "";
+    return;
+  }
+
+  const dataFmt = formatarDataBR(ev.dataISO);
+  const hora = ev.hora ? `às ${ev.hora}` : "";
+  const tipo = (ev.tipo || "").toLowerCase();
+
+  const badges = [];
+  badges.push(`<span class="badge"><i class="ri-calendar-2-line"></i>${dataFmt} ${hora}</span>`);
+
+  if (tipo === "online") {
+    badges.push(`<span class="badge"><i class="ri-video-on-line"></i>Online</span>`);
+  } else {
+    badges.push(`<span class="badge"><i class="ri-map-pin-line"></i>Presencial</span>`);
+  }
+
+  let links = "";
+  if (tipo === "online") {
+    if (ev.linkReuniao) links += `<a target="_blank" rel="noreferrer" href="${ev.linkReuniao}"><i class="ri-video-on-line"></i>Entrar na reunião</a>`;
+    if (ev.linkAta) links += `<a target="_blank" rel="noreferrer" href="${ev.linkAta}"><i class="ri-file-list-3-line"></i>Ata / Documento</a>`;
+  } else {
+    if (ev.endereco) links += `<a target="_blank" rel="noreferrer" href="${ev.maps || "#"}"><i class="ri-map-pin-line"></i>Ver local</a>`;
+    if (ev.linkAta) links += `<a target="_blank" rel="noreferrer" href="${ev.linkAta}"><i class="ri-file-list-3-line"></i>Ata / Documento</a>`;
+  }
+
+  box.innerHTML = `
+    <div class="next-title">Próximo encontro</div>
+    <div class="next-row">${badges.join("")}</div>
+    <div class="next-title" style="margin-top:10px; font-size:14px; opacity:.95;">${ev.titulo || ""}</div>
+    ${links ? `<div class="next-links">${links}</div>` : ""}
+    ${ev.observacao ? `<div class="next-note">${ev.observacao}</div>` : ""}
+  `;
+}
