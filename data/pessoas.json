@@ -1,1 +1,27 @@
-
+{
+  "Felipe": {
+    "foto": "img/preletores/felipe.jpg",
+    "cargo": "Líder Geral do Fullness",
+    "descricao": "Responsável pela direção espiritual e estratégica do movimento, coordenação da equipe e liderança das ministrações."
+  },
+  "Isabela": {
+    "foto": "img/preletores/isabela.jpg",
+    "cargo": "Líder de Mídia",
+    "descricao": "Responsável pela comunicação visual e digital do Fullness, criação de conteúdos, cobertura dos cultos e gestão das redes sociais."
+  },
+  "Fonseca": {
+    "foto": "img/preletores/fonseca.jpg",
+    "cargo": "Líder Staff & EDD",
+    "descricao": "Responsável pela organização da equipe de apoio e desenvolvimento de discipulado, auxiliando na estrutura e no cuidado com os jovens."
+  },
+  "Caio": {
+    "foto": "img/preletores/caio.jpg",
+    "cargo": "Líder de Louvor e Adoração",
+    "descricao": "Responsável pela direção do ministério de louvor, organização da equipe musical e condução dos momentos de adoração nos cultos."
+  },
+  "Latera": {
+    "foto": "img/preletores/latera.jpg",
+    "cargo": "Líder de Recursos e Projetos",
+    "descricao": "Responsável pelo planejamento e execução de projetos, organização de recursos e suporte estrutural das programações do movimento."
+  }
+}
