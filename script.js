@@ -23,8 +23,7 @@ async function iniciar() {
     agendaEstruturada = parseAgenda(agendaTxt || "");
     render();
 
-    const backbtn = document.getElementById("backbtn");
-    backbtn.addEventListener("click", () => {
+    document.getElementById("backbtn").addEventListener("click", () => {
       filtroAtual = null;
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -37,9 +36,7 @@ async function iniciar() {
 }
 
 function normalizarMes(m) {
-  const up = (m || "").toUpperCase().trim();
-  if (MESES_MAP[up]) return up;
-  return up;
+  return (m || "").toUpperCase().trim();
 }
 
 function isAno(linha) {
@@ -62,6 +59,10 @@ function limparSeparadores(txt) {
     .replace(/^[–\-]\s*/, "")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+function escapeRegExp(s) {
+  return (s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function detectarNomePreletor(texto) {
@@ -90,31 +91,39 @@ function removerTema(texto) {
 }
 
 function removerNomeDoTexto(texto, nome) {
-  let t = texto || "";
+  let t = (texto || "").trim();
+
+  // remove @Nome
   t = t.replace(/@([A-Za-zÀ-ÿ0-9_]+)/, "").trim();
+
   if (nome) {
-    const re = new RegExp(`\\b${escapeRegExp(nome)}\\b\\s*$`);
-    t = t.replace(re, "").trim();
+    const n = escapeRegExp(nome);
+
+    // remove " – Nome" ou " - Nome" ou " | Nome" no final
+    t = t.replace(new RegExp(`[–\\-|]\\s*${n}\\s*$`), "").trim();
+    t = t.replace(new RegExp(`\\|\\s*${n}\\s*$`), "").trim();
+
+    // remove "Nome" no final (caso esteja solto)
+    t = t.replace(new RegExp(`\\b${n}\\b\\s*$`), "").trim();
+
+    // remove "– Nome" no meio (caso repetido)
+    t = t.replace(new RegExp(`[–\\-|]\\s*${n}\\b`, "g"), "").trim();
   }
+
+  // limpa separadores finais
   t = t.replace(/[–\-|]\s*$/, "").trim();
   t = t.replace(/\s{2,}/g, " ").trim();
-  return t;
-}
 
-function escapeRegExp(s) {
-  return (s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return t;
 }
 
 function parseAgenda(txt) {
   const linhas = (txt || "").split("\n").map(l => l.trim()).filter(Boolean);
 
-  const estrutura = {
-    anos: {}
-  };
+  const estrutura = { anos: {} };
 
   let anoAtual = "";
   let mesAtual = "";
-  let temaMesAtual = null;
 
   for (const original of linhas) {
     let linha = original;
@@ -123,7 +132,6 @@ function parseAgenda(txt) {
       anoAtual = linha;
       if (!estrutura.anos[anoAtual]) estrutura.anos[anoAtual] = { meses: {} };
       mesAtual = "";
-      temaMesAtual = null;
       continue;
     }
 
@@ -135,18 +143,16 @@ function parseAgenda(txt) {
       const low = linha.toLowerCase();
 
       if (low.startsWith("série:") || low.startsWith("serie:") || low.startsWith("tema do mês:") || low.startsWith("tema do mes:")) {
-        temaMesAtual = linha.split(":").slice(1).join(":").trim();
-        if (mesAtual) {
-          estrutura.anos[anoAtual].meses[mesAtual].temaMes = temaMesAtual;
+        const tema = linha.split(":").slice(1).join(":").trim();
+        if (mesAtual && estrutura.anos[anoAtual].meses[mesAtual]) {
+          estrutura.anos[anoAtual].meses[mesAtual].temaMes = tema;
         }
         continue;
       }
 
       mesAtual = normalizarMes(linha);
       if (!estrutura.anos[anoAtual].meses[mesAtual]) {
-        estrutura.anos[anoAtual].meses[mesAtual] = { temaMes: temaMesAtual, dias: {} };
-      } else {
-        estrutura.anos[anoAtual].meses[mesAtual].temaMes = estrutura.anos[anoAtual].meses[mesAtual].temaMes || temaMesAtual;
+        estrutura.anos[anoAtual].meses[mesAtual] = { temaMes: null, dias: {} };
       }
       continue;
     }
@@ -155,6 +161,7 @@ function parseAgenda(txt) {
 
     const lower = linha.toLowerCase();
     let tipo = "principal";
+
     if (lower.startsWith("extra:")) {
       tipo = "extra";
       linha = linha.split(":").slice(1).join(":").trim();
@@ -181,7 +188,6 @@ function parseAgenda(txt) {
     resto = removerTema(resto);
 
     const nome = detectarNomePreletor(resto);
-
     const textoLimpo = removerNomeDoTexto(resto, nome);
 
     const mesObj = estrutura.anos[anoAtual].meses[mesAtual];
@@ -234,7 +240,6 @@ function render() {
 
   filterbar.classList.remove("active");
   filtertitle.textContent = "";
-
   renderCompleto(cal);
 }
 
@@ -244,7 +249,6 @@ function renderCompleto(root) {
   for (const ano of anos) {
     const anoObj = agendaEstruturada.anos[ano];
     const meses = Object.keys(anoObj.meses);
-
     if (meses.length === 0) continue;
 
     const yearTitle = document.createElement("div");
@@ -267,12 +271,11 @@ function renderCompleto(root) {
       const nomeMes = document.createElement("div");
       nomeMes.className = "month-name";
       nomeMes.textContent = mes;
-
       head.appendChild(nomeMes);
 
       if (mesObj.temaMes) {
         const tag = document.createElement("div");
-        tag.className = "month-tag";
+        tag.className = "month-tag series";
         tag.textContent = mesObj.temaMes;
         head.appendChild(tag);
       }
@@ -280,9 +283,8 @@ function renderCompleto(root) {
       bloco.appendChild(head);
 
       dias.sort((a, b) => ordenarDia(a.dia, b.dia));
-
       for (const diaObj of dias) {
-        bloco.appendChild(criarCardDia(ano, mes, diaObj));
+        bloco.appendChild(criarCardDia(diaObj));
       }
 
       root.appendChild(bloco);
@@ -292,8 +294,8 @@ function renderCompleto(root) {
 
 function renderFiltradoPorPreletor(root, nome) {
   const itens = [];
-
   const anos = Object.keys(agendaEstruturada.anos).sort((a, b) => Number(a) - Number(b));
+
   for (const ano of anos) {
     const anoObj = agendaEstruturada.anos[ano];
     const meses = Object.keys(anoObj.meses).sort((a, b) => (MESES_MAP[a] || 99) - (MESES_MAP[b] || 99));
@@ -303,8 +305,9 @@ function renderFiltradoPorPreletor(root, nome) {
       const dias = Object.values(mesObj.dias);
 
       for (const d of dias) {
-        const hit = (d.nomePrincipal || "") === nome;
-        if (hit) itens.push({ ano, mes, d, temaMes: mesObj.temaMes || null });
+        if ((d.nomePrincipal || "") === nome) {
+          itens.push({ ano, mes, d });
+        }
       }
     }
   }
@@ -335,6 +338,7 @@ function renderFiltradoPorPreletor(root, nome) {
 
       const bloco = document.createElement("section");
       bloco.className = "month-block";
+      bloco.dataset.k = chave;
 
       const head = document.createElement("div");
       head.className = "month-head";
@@ -342,24 +346,14 @@ function renderFiltradoPorPreletor(root, nome) {
       const nomeMes = document.createElement("div");
       nomeMes.className = "month-name";
       nomeMes.textContent = `${it.mes} • ${it.ano}`;
-
       head.appendChild(nomeMes);
 
-      if (it.temaMes) {
-        const tag = document.createElement("div");
-        tag.className = "month-tag";
-        tag.textContent = it.temaMes;
-        head.appendChild(tag);
-      }
-
       bloco.appendChild(head);
-      bloco.dataset.k = chave;
-
       root.appendChild(bloco);
     }
 
     const blocoAtual = root.querySelector(`.month-block[data-k="${chaveAtual}"]`);
-    blocoAtual.appendChild(criarCardDia(it.ano, it.mes, it.d, true));
+    blocoAtual.appendChild(criarCardDia(it.d));
   }
 }
 
@@ -369,7 +363,7 @@ function ordenarDia(a, b) {
   return na - nb;
 }
 
-function criarCardDia(ano, mes, diaObj, modoFiltrado = false) {
+function criarCardDia(diaObj) {
   const card = document.createElement("div");
   card.className = "day-card";
 
@@ -387,9 +381,10 @@ function criarCardDia(ano, mes, diaObj, modoFiltrado = false) {
 
   const main = document.createElement("div");
   main.className = "line-main";
+
+  // Aqui não duplica mais: texto já vem sem nome
   const preletorTxt = diaObj.nomePrincipal ? ` • ${diaObj.nomePrincipal}` : "";
   main.textContent = `${diaObj.principal || ""}${preletorTxt}`;
-
   content.appendChild(main);
 
   if (diaObj.temaPregacao) {
