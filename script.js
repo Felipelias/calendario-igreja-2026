@@ -1,87 +1,109 @@
 document.addEventListener("DOMContentLoaded", () => {
-  carregarAgenda();
+  carregarDados();
 });
 
-async function carregarAgenda() {
-  try {
-    const response = await fetch("agenda.txt?v=" + new Date().getTime());
-    const texto = await response.text();
-    gerarCalendario(texto);
-  } catch (erro) {
-    console.error("Erro ao carregar agenda:", erro);
-  }
-}
+let pessoas = {};
 
-function ehSabado(dia, mes, ano) {
-  const data = new Date(ano, mes - 1, dia);
-  return data.getDay() === 6;
+async function carregarDados() {
+  const agenda = await fetch("agenda.txt?v=" + new Date().getTime()).then(r => r.text());
+  pessoas = await fetch("data/pessoas.json").then(r => r.json());
+  gerarCalendario(agenda);
 }
 
 function gerarCalendario(texto) {
 
-  const linhas = texto.split("\n")
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
+  const linhas = texto.split("\n").map(l => l.trim()).filter(l => l);
 
   const container = document.querySelector(".calendar");
   container.innerHTML = "";
 
-  const ano = parseInt(linhas[0]);
-  document.querySelector(".subtitle").innerText =
-    "CALENDÁRIO SÁBADOS " + ano;
-
+  let ano = "";
   let mesAtual = "";
   let eventosPorMes = {};
 
-  for (let i = 1; i < linhas.length; i++) {
+  linhas.forEach(linha => {
 
-    const linha = linhas[i];
-
-    if (!/^\d{2}\/\d{2}/.test(linha)) {
-      mesAtual = linha;
-      eventosPorMes[mesAtual] = [];
-    } else {
-
-      const partes = linha.split(" - ");
-      const dataTexto = partes[0];
-      const titulo = partes.slice(1).join(" - ");
-
-      const [dia, mes] = dataTexto.split("/").map(Number);
-
-      if (ehSabado(dia, mes, ano)) {
-        eventosPorMes[mesAtual].push({ dia, titulo });
-      }
+    if (/^\d{4}$/.test(linha)) {
+      ano = linha;
+      return;
     }
-  }
+
+    if (!linha.includes("/")) {
+      mesAtual = linha;
+      if (!eventosPorMes[mesAtual]) eventosPorMes[mesAtual] = [];
+      return;
+    }
+
+    let tipo = "principal";
+
+    if (linha.startsWith("Evento:")) {
+      tipo = "evento";
+      linha = linha.replace("Evento:", "").trim();
+    }
+
+    if (linha.startsWith("Exceção:")) {
+      tipo = "excecao";
+      linha = linha.replace("Exceção:", "").trim();
+    }
+
+    const partes = linha.split("–");
+    const dataTexto = partes[0].trim();
+    const titulo = partes.slice(1).join("–").trim();
+
+    const dia = dataTexto.split("/")[0];
+
+    eventosPorMes[mesAtual].push({ dia, titulo, tipo });
+  });
 
   Object.keys(eventosPorMes).forEach(mes => {
-
-    if (eventosPorMes[mes].length === 0) return;
-
-    eventosPorMes[mes].sort((a, b) => a.dia - b.dia);
 
     const blocoMes = document.createElement("div");
     blocoMes.classList.add("month-block");
 
     const tituloMes = document.createElement("h2");
-    tituloMes.classList.add("month-title");
     tituloMes.innerText = mes;
-
     blocoMes.appendChild(tituloMes);
 
     eventosPorMes[mes].forEach(evento => {
 
-      const eventoDiv = document.createElement("div");
-      eventoDiv.classList.add("event");
+      const div = document.createElement("div");
+      div.classList.add("event");
+      if (evento.tipo !== "principal") div.classList.add(evento.tipo);
 
-      eventoDiv.innerHTML = `
-        <div class="date">${evento.dia.toString().padStart(2, "0")}</div>
+      const nomeMatch = evento.titulo.match(/@(\w+)/);
+      let nome = nomeMatch ? nomeMatch[1] : null;
+
+      let fotoHTML = "";
+
+      if (nome && pessoas[nome]) {
+        fotoHTML = `<img src="${pessoas[nome].foto}" class="avatar" onclick="abrirModal('${nome}')">`;
+      }
+
+      div.innerHTML = `
+        <div class="date">${evento.dia}</div>
+        ${fotoHTML}
         <div class="info">${evento.titulo}</div>
       `;
 
-      blocoMes.appendChild(eventoDiv);
+      blocoMes.appendChild(div);
     });
 
     container.appendChild(blocoMes);
   });
 }
+
+function abrirModal(nome) {
+
+  const pessoa = pessoas[nome];
+
+  document.getElementById("modal-foto").src = pessoa.foto;
+  document.getElementById("modal-nome").innerText = nome;
+  document.getElementById("modal-cargo").innerText = pessoa.cargo;
+  document.getElementById("modal-desc").innerText = pessoa.descricao;
+
+  document.getElementById("modal").classList.add("active");
+}
+
+document.getElementById("modal").addEventListener("click", () => {
+  document.getElementById("modal").classList.remove("active");
+});
