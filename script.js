@@ -71,18 +71,22 @@ function gerarCalendario(texto) {
       if (evento.tipo !== "principal") div.classList.add(evento.tipo);
 
       const nomeMatch = evento.titulo.match(/@(\w+)/);
+let nome = nomeMatch ? nomeMatch[1] : null;
+
+let tituloLimpo = evento.titulo.replace(/@\w+/, "").trim();
+      
       let nome = nomeMatch ? nomeMatch[1] : null;
 
       let fotoHTML = "";
 
       if (nome && pessoas[nome]) {
-        fotoHTML = `<img src="${pessoas[nome].foto}" class="avatar" onclick="abrirModal('${nome}')">`;
-      }
+  div.onclick = () => abrirModal(nome);
+}
 
       div.innerHTML = `
         <div class="date">${evento.dia}</div>
         ${fotoHTML}
-        <div class="info">${evento.titulo}</div>
+        <div class="info">${tituloLimpo}</div>
       `;
 
       blocoMes.appendChild(div);
@@ -107,3 +111,4 @@ function abrirModal(nome) {
 document.getElementById("modal").addEventListener("click", () => {
   document.getElementById("modal").classList.remove("active");
 });
+
